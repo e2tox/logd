@@ -1,33 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Logd</title>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-    <script type="text/javascript">
-        $(function() {
-            var conn;
-            var log = $("#log");
-            function appendLog(msg) {
-                var d = log[0]
-                var doScroll = d.scrollTop > (d.scrollHeight - d.clientHeight - 50);
-                msg.appendTo(log)
-                if (doScroll) {
-                    d.scrollTop = d.scrollHeight - d.clientHeight;
-                }
-            }
-            if (window["WebSocket"]) {
-                conn = new WebSocket("ws://{{$}}/ws");
-                conn.onclose = function(evt) {
-                    appendLog($("<div><b>Connection closed.</b></div>"))
-                }
-                conn.onmessage = function(evt) {
-                    appendLog($("<div/>").text(evt.data))
-                }
-            } else {
-                appendLog($("<div><b>Your browser does not support WebSockets.</b></div>"))
-            }
-        });
-    </script>
+    <title>logd</title>
     <style type="text/css">
         html {
             overflow: hidden;
@@ -48,12 +22,22 @@
             border: 3px double #CCCCCC;
             padding: 10px;
         }
+        ::selection {
+            color: black;
+            background: yellow; /* WebKit/Blink Browsers */
+        }
+        ::-moz-selection {
+            color: black;
+            background: yellow; /* Gecko Browsers */
+        }
+        #banner {
+            padding: 0.5em 0.5em 0.5em 0.5em;
+        }
         #log {
-            background: #111;
             margin: 0;
             padding: 0.5em 0.5em 0.5em 0.5em;
             position: absolute;
-            top: 0.5em;
+            top: 2.5em;
             left: 0.5em;
             right: 0.5em;
             bottom: 0.5em;
@@ -62,6 +46,44 @@
     </style>
 </head>
 <body>
-<div id="log" class="console"></div>
+<div id="banner">
+    Logd
+</div>
+<div id="log" class="console">
+    <div>Connecting to server...</div>
+</div>
+<script type="text/javascript">
+    var conn;
+    var stream_url = 'ws://{{$}}/ws';
+    function appendLogItem(text) {
+        var log = document.getElementById('log');
+        var doScroll = log.scrollTop > (log.scrollHeight - log.clientHeight - 50);
+        var node = document.createElement('DIV');
+        node.appendChild(document.createTextNode(text));
+        log.appendChild(node);
+        if (doScroll) {
+            log.scrollTop = log.scrollHeight - log.clientHeight;
+        }
+    }
+
+    function init(url) {
+        conn = new WebSocket(url);
+        conn.onclose = function() {
+            appendLogItem('Connection closed. Retry in 5 seconds...');
+            conn = null;
+            setTimeout(function() {
+                init(stream_url);
+            }, 5000)
+        };
+        conn.onmessage = function(evt) {
+            appendLogItem(evt.data);
+        };
+    }
+    if (window['WebSocket']) {
+        init(stream_url);
+    } else {
+        //appendLogItem('Your browser does not support WebSockets.');
+    }
+</script>
 </body>
 </html>
