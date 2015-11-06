@@ -6,27 +6,15 @@
     <script type="text/javascript">
         $(function() {
             var conn;
-            var msg = $("#msg");
             var log = $("#log");
             function appendLog(msg) {
                 var d = log[0]
-                var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+                var doScroll = d.scrollTop > (d.scrollHeight - d.clientHeight - 50);
                 msg.appendTo(log)
                 if (doScroll) {
                     d.scrollTop = d.scrollHeight - d.clientHeight;
                 }
             }
-            $("#form").submit(function() {
-                if (!conn) {
-                    return false;
-                }
-                if (!msg.val()) {
-                    return false;
-                }
-                conn.send(msg.val());
-                msg.val("");
-                return false
-            });
             if (window["WebSocket"]) {
                 conn = new WebSocket("ws://{{$}}/ws");
                 conn.onclose = function(evt) {
@@ -52,8 +40,16 @@
             height: 100%;
             background: gray;
         }
+        .console {
+            font-family: Courier;
+            font-size: 10pt;
+            color: teal;
+            background: #000000;
+            border: 3px double #CCCCCC;
+            padding: 10px;
+        }
         #log {
-            background: white;
+            background: #111;
             margin: 0;
             padding: 0.5em 0.5em 0.5em 0.5em;
             position: absolute;
@@ -66,6 +62,6 @@
     </style>
 </head>
 <body>
-<div id="log"></div>
+<div id="log" class="console"></div>
 </body>
 </html>

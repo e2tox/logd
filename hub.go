@@ -1,5 +1,7 @@
 package main
 
+import "github.com/gorilla/websocket"
+
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
 type hub struct {
@@ -28,6 +30,7 @@ func (h *hub) run() {
 		select {
 		case c := <-h.register:
 			h.connections[c] = true
+			c.write(websocket.TextMessage, []byte("Connected to server"))
 		case c := <-h.unregister:
 			if _, ok := h.connections[c]; ok {
 				delete(h.connections, c)
@@ -43,5 +46,11 @@ func (h *hub) run() {
 				}
 			}
 		}
+	}
+}
+
+func (h *hub) notify(payload string) {
+	for c := range h.connections {
+		c.write(websocket.TextMessage, []byte(payload))
 	}
 }
